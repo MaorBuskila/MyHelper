@@ -55,13 +55,13 @@ import kotlin.jvm.functions.Function1;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity { ;
     private Context mContext;
     private Activity mActivity;
 
     private static final String SMS_RECEVIED = "android.provider.Telephony.SMS_RECEIVED";
 
-    private String password = "123";
+    private String password = "";
     private double latitude ;
     private double longitude ;
 
@@ -71,8 +71,8 @@ public class MainActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
 
     private static final int MY_PERMISSIONS_REQUEST_CODE = 123;
-    private static final String SHARED_PREFS = "preferences";
-    public static final String PASSWORD = "password";
+    private static final String SHARED_PREFS = "sharedPrefs";
+    private static final String SHARED_PASSWORD = "Password";
 
 
 
@@ -90,8 +90,11 @@ public class MainActivity extends AppCompatActivity {
         mContext = getApplicationContext();
         mActivity = MainActivity.this;
 
-        Intent intent = getIntent();
-        password = intent.getStringExtra("password");
+
+        // get user password
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
+        password = sharedPreferences.getString(SHARED_PASSWORD, "");
+
 
 
 
@@ -102,9 +105,12 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigation.add(new SSCustomBottomNavigation.Model(3,R.drawable.ring,"ring"));
         bottomNavigation.add(new SSCustomBottomNavigation.Model(4,R.drawable.settings,"settings"));
 
+        //some stuff
         bottomNavigation.setCount(2,"11");
         bottomNavigation.show(4,true);
+
         replace(new SettingsFragment());
+
         bottomNavigation.setOnClickMenuListener(new Function1<SSCustomBottomNavigation.Model, Unit>() {
             @Override
             public Unit invoke(SSCustomBottomNavigation.Model model) {
@@ -143,8 +149,6 @@ public class MainActivity extends AppCompatActivity {
 
 //Functions:
 
-
-
     //get contacts name
 public String getContactNum(String name_to_search) {
      final String[] CONTACTS_SUMMARY_PROJECTION = new String[]{
@@ -157,10 +161,7 @@ public String getContactNum(String name_to_search) {
             ContactsContract.Contacts.LOOKUP_KEY,
             ContactsContract.Contacts.HAS_PHONE_NUMBER,
     };
-
      String phonenumber= "";
-
-
     String select = "(" + ContactsContract.Contacts.DISPLAY_NAME + " == \"" + name_to_search + "\" )";
     Cursor c = mContext.getContentResolver().query(ContactsContract.Contacts.CONTENT_URI, CONTACTS_SUMMARY_PROJECTION, select, null, ContactsContract.Contacts.DISPLAY_NAME + " COLLATE LOCALIZED ASC");
 
@@ -175,23 +176,15 @@ public String getContactNum(String name_to_search) {
             phonenumber =  pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 
         }
-
         pCur.close();
     }
     return phonenumber;
     }
 
 
-
-
-
-
-
-
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void playRingtone() {
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
             notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
@@ -205,16 +198,10 @@ public String getContactNum(String name_to_search) {
 
         }
         // To set full volume
-
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
         audioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume, AudioManager.FLAG_SHOW_UI + AudioManager.FLAG_PLAY_SOUND);
         Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 
-        //Im here ringtone
-        //Uri alert = Uri.parse("android.resource://" + getPackageName() + "/raw/im_here.mp3");
-        RingtoneManager.setActualDefaultRingtoneUri(
-                getApplicationContext(), RingtoneManager.TYPE_ALARM, alert
-        );
         if (alert == null){
             // alert is null, using backup
             alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -251,20 +238,22 @@ public String getContactNum(String name_to_search) {
 
             //Help
 
-            if (msg.equals(password + " Help me")) {
+            if (msg.equals("Help me")) {
                 smsManagerSend.sendTextMessage(phoneNo, null,
-                        "hello",
+                        "Ring - 'password' help me ring\n" +
+                                "Location - 'password' find my location\n" +
+                                "Contact - 'password' find number ",
                         null, null);
-                Toast.makeText(context, "Message sent " + phoneNo, Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "password is:  " + password, Toast.LENGTH_LONG).show();
 
             }
             //Ring
-            else if (msg.equals(password + " Help me ring")) {
+            else if (msg.equals(password + " help me ring")) {
 
                 playRingtone();
 
 
-            } else if (msg.equals(password + " Help me find location")) {
+            } else if (msg.equals(password + " find my location")) {
                 Toast.makeText(context, "sending location", Toast.LENGTH_SHORT).show();
                 locationFragment.startLocationUpdates();
                 locationFragment.getLocation();
@@ -273,8 +262,8 @@ public String getContactNum(String name_to_search) {
                         "http://maps.google.com/?q=" + latitude + "," + longitude, null, null);
             }
 
-            else if (msg.contains(password + " Help me find number ")) {
-                String contact = msg.substring(password.length() + 21);
+            else if (msg.contains(password + " find number ")) {
+                String contact = msg.substring(password.length() + 13);
                 String contactNumber = getContactNum(contact);
                 smsManagerSend.sendTextMessage(phoneNo, null,
                         contactNumber, null, null);

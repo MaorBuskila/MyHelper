@@ -86,9 +86,6 @@ public class SettingsFragment extends Fragment {
         });
 
         load_data();
-
-        Intent intent = new Intent(getActivity(), MainActivity.class);
-        intent.putExtra("password", passwordValue);
         return view;
 
 
