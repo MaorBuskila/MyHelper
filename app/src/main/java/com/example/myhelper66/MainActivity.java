@@ -93,7 +93,7 @@ public class MainActivity extends AppCompatActivity { ;
 
         // get user password
         SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
-        password = sharedPreferences.getString(SHARED_PASSWORD, "");
+        password = sharedPreferences.getString(SHARED_PASSWORD, "1");
 
 
 
