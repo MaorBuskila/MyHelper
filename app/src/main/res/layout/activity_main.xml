@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
+    android:background="@color/grey"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    >
+
+    <FrameLayout
+        android:id="@+id/frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        />
+
+    <com.simform.custombottomnavigation.SSCustomBottomNavigation
+        android:id="@+id/bottomNavigation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        app:ss_backgroundBottomColor="@color/white"
+        app:ss_circleColor="#ff6f00"
+        app:ss_countBackgroundColor="#ff6f00"
+        app:ss_countTextColor="@color/grey"
+        app:ss_defaultIconColor="@color/grey"
+        app:ss_iconTextColor="@color/grey"
+        app:ss_iconTextSize="14sp"
+        app:ss_rippleColor="#00000000"
+        app:ss_selectedIconColor="@color/black"
+        app:ss_selectedIconTextColor="@color/black"
+        app:ss_shadowColor="#1f212121"
+        app:ss_waveHeight="7" />
+
+
+</RelativeLayout>

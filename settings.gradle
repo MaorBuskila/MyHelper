@@ -1,0 +1,2 @@
+rootProject.name = "MyHelper6.6"
+include ':app'
