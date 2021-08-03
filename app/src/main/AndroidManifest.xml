@@ -42,8 +42,9 @@
         <activity android:name=".SplashActivty">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.SCREEN_OFF"/>
+                <action android:name="android.intent.action.SCREEN_ON"/>
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"></activity>

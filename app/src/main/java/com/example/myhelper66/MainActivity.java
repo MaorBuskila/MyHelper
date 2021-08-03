@@ -4,10 +4,8 @@ package com.example.myhelper66;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -22,7 +20,6 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -41,10 +38,7 @@ import android.os.Looper;
 import android.provider.ContactsContract;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
+import android.view.KeyEvent;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -62,17 +56,23 @@ public class MainActivity extends AppCompatActivity { ;
     private static final String SMS_RECEVIED = "android.provider.Telephony.SMS_RECEIVED";
 
     private String password = "";
-    private double latitude ;
-    private double longitude ;
+    private String latitude ;
+    private String longitude ;
+    private String name;
+    private String phonenumebr;
 
     //Initialize toolBar
     private SSCustomBottomNavigation bottomNavigation;
-
     private FusedLocationProviderClient fusedLocationClient;
 
     private static final int MY_PERMISSIONS_REQUEST_CODE = 123;
     private static final String SHARED_PREFS = "sharedPrefs";
     private static final String SHARED_PASSWORD = "Password";
+    private static final String SHARED_LONG = "longitude";
+    private static final String SHARED_LAT = "latitude";
+    Ringtone r;
+
+
 
 
 
@@ -89,13 +89,15 @@ public class MainActivity extends AppCompatActivity { ;
         // Get the application context
         mContext = getApplicationContext();
         mActivity = MainActivity.this;
+        Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+        this.r = RingtoneManager.getRingtone(getApplicationContext(), alert);
 
 
-        // get user password
-        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
-        password = sharedPreferences.getString(SHARED_PASSWORD, "1");
 
 
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        startLocationUpdates();
 
 
         //Get the toolbar reference from xml layout
@@ -117,11 +119,12 @@ public class MainActivity extends AppCompatActivity { ;
 
                 switch (model.getId()){
                     case 1:
-                        replace(new ContactFragment());
+                        replace(new BlackListFragment());
                         break;
 
                     case 2:
                         replace(new LocationFragment());
+                        getLocation();
                         break;
 
                     case 3:
@@ -149,7 +152,128 @@ public class MainActivity extends AppCompatActivity { ;
 
 //Functions:
 
-    //get contacts name
+    //add contact to blacklist
+    public void add_to_blackList(String phonenumebr) {
+        MyDataBase myDataBase = new MyDataBase(this);
+        String contact_name = getContactName(phonenumebr, mContext);
+        myDataBase.addToBlackList(contact_name, phonenumebr);
+    }
+
+    // get user password
+    public void load_password() {
+        SharedPreferences sharedPreferences = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
+        password = sharedPreferences.getString(SHARED_PASSWORD, "");
+    }
+
+    //LOCATION FUNCTIONS
+    void getLocation() {
+        if (ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        fusedLocationClient.getLastLocation().addOnSuccessListener(this, new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                // Got last known location. In some rare situations this can be null.
+
+                if (location != null) {
+                    // Logic to handle location object
+                    latitude = String.valueOf(location.getLatitude());
+                    longitude = String.valueOf(location.getLongitude());
+                }
+                //check why 0 , 0
+                else {
+                    latitude = "6";
+                    longitude = "9";
+
+                }
+            }
+        });
+    }
+
+    //send location
+    public void send_and_push_location() {
+
+        SharedPreferences sharedPreferences = this.getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(SHARED_LAT, latitude);
+        editor.putString(SHARED_LONG, longitude);
+        editor.apply();
+    }
+
+
+
+    // Trigger new location updates at interval
+    @SuppressLint("MissingPermission")
+    protected void startLocationUpdates() {
+
+        // Create the location request to start receiving updates
+        //location
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        /* 10 secs */
+        long UPDATE_INTERVAL = 60 * 1000;
+        mLocationRequest.setInterval(UPDATE_INTERVAL);
+        /* 2 sec */
+        long FASTEST_INTERVAL = 2000;
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        // Create LocationSettingsRequest object using location request
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+        builder.addLocationRequest(mLocationRequest);
+        LocationSettingsRequest locationSettingsRequest = builder.build();
+
+        // Check whether location settings are satisfied
+        // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
+        SettingsClient settingsClient = LocationServices.getSettingsClient(mContext);
+        settingsClient.checkLocationSettings(locationSettingsRequest);
+
+        // new Google API SDK v11 uses getFusedLocationProviderClient(this)
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        getFusedLocationProviderClient(mContext).requestLocationUpdates(mLocationRequest, new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        // do work here
+                        onLocationChanged(locationResult.getLastLocation());
+                    }
+                },
+                Looper.myLooper());
+    }
+
+    public void onLocationChanged(Location location) {
+        // New location has now been determined
+        String msg = "Updated Location: " +
+                Double.toString(location.getLatitude()) + "," +
+                Double.toString(location.getLongitude());
+        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+        // You can now create a LatLng Object for use with maps
+        if (location != null) {
+            // Logic to handle location object
+            latitude = String.valueOf(location.getLatitude());
+            longitude = String.valueOf(location.getLongitude());
+            send_and_push_location();
+        }
+    }
+
+    //END Location function
+
+    //get contacts number
 public String getContactNum(String name_to_search) {
      final String[] CONTACTS_SUMMARY_PROJECTION = new String[]{
             ContactsContract.Contacts._ID,
@@ -181,12 +305,32 @@ public String getContactNum(String name_to_search) {
     return phonenumber;
     }
 
+    public String getContactName(final String phoneNumber, Context context)
+    {
+        Uri uri=Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI,Uri.encode(phoneNumber));
+
+        String[] projection = new String[]{ContactsContract.PhoneLookup.DISPLAY_NAME};
+
+        String contactName="";
+        Cursor cursor=context.getContentResolver().query(uri,projection,null,null,null);
+
+        if (cursor != null) {
+            if(cursor.moveToFirst()) {
+                contactName=cursor.getString(0);
+            }
+            cursor.close();
+        }
+
+        return contactName;
+    }
+
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void playRingtone() {
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             int previous_notification_interrupt_setting = notificationManager.getCurrentInterruptionFilter();
+            //check if not distrub is allowed!
             notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALARMS);
         }
 
@@ -199,32 +343,44 @@ public String getContactNum(String name_to_search) {
         }
         // To set full volume
         int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_RING);
-        audioManager.setStreamVolume(AudioManager.STREAM_RING, maxVolume, AudioManager.FLAG_SHOW_UI + AudioManager.FLAG_PLAY_SOUND);
-        Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-
-        if (alert == null){
-            // alert is null, using backup
-            alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            if (alert == null){
-                // alert backup is null, using 2nd backup
-                alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            }
-        }
-        Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), alert);
-        r.setStreamType(AudioManager.STREAM_ALARM);
-        r.play();
+        audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, AudioManager.FLAG_SHOW_UI + AudioManager.FLAG_PLAY_SOUND);
+ //       Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+//
+//        if (alert == null){
+//            // alert is null, using backup
+//            alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+//            if (alert == null){
+//                // alert backup is null, using 2nd backup
+//                alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+//            }
+//        }
+//        r = RingtoneManager.getRingtone(getApplicationContext(), alert);
+        this.r.setStreamType(AudioManager.STREAM_ALARM);
+        this.r.play();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(receiver, new IntentFilter(SMS_RECEVIED));
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unregisterReceiver(receiver);
+    }
+    //NOT WORKING - pause ring with PWR BTN
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_POWER) {
+            // do what you want with the power button
+                this.r.stop();
+
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
 
@@ -236,28 +392,23 @@ public String getContactNum(String name_to_search) {
             SmsManager smsManagerSend = SmsManager.getDefault();
             LocationFragment locationFragment = new LocationFragment();
 
+            phonenumebr = phoneNo;
             //Help
-
             if (msg.equals("Help me")) {
+                add_to_blackList(phoneNo);
                 smsManagerSend.sendTextMessage(phoneNo, null,
-                        "Ring - 'password' help me ring\n" +
-                                "Location - 'password' find my location\n" +
-                                "Contact - 'password' find number ",
+                        "Ring - 'password' help me ring\n + " +
+                                "Location - 'password' find my location + " +
+                                "Contact - 'password' find number",
                         null, null);
-                Toast.makeText(context, "password is:  " + password, Toast.LENGTH_LONG).show();
-
             }
             //Ring
             else if (msg.equals(password + " help me ring")) {
-
                 playRingtone();
 
 
             } else if (msg.equals(password + " find my location")) {
                 Toast.makeText(context, "sending location", Toast.LENGTH_SHORT).show();
-                locationFragment.startLocationUpdates();
-                locationFragment.getLocation();
-
                 smsManagerSend.sendTextMessage(phoneNo, null,
                         "http://maps.google.com/?q=" + latitude + "," + longitude, null, null);
             }

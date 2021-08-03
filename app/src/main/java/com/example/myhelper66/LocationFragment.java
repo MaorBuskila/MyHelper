@@ -50,29 +50,34 @@ import static com.google.android.gms.location.LocationServices.getFusedLocationP
 public class LocationFragment extends Fragment {
 
     private LatLng latLng;
-    private double latitude;
-    private  double longitude;
+    private String latitude;
+    private String longitude;
     private FusedLocationProviderClient fusedLocationClient;
     private Context mContext;
     private Activity mActivity;
+    private View view;
 
+    private static final String SHARED_PREFS = "sharedPrefs";
+    private static final String SHARED_LONG = "longitude";
+    private static final String SHARED_LAT = "latitude";
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_settings, container, false);
-
+        view = inflater.inflate(R.layout.fragment_settings, container, false);
+        load_location_data();
 
 
 // TODO: 04/07/2021 when press on location navbar check if has persmssion to location
 
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-        getLocation();
-        
-       
-        
-        
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(mContext);
+        startLocationUpdates();
+
+
+
+
+
 
 
         // Initialize map fragment
@@ -90,8 +95,9 @@ public class LocationFragment extends Fragment {
         supportMapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap googleMap) {
-
-            latLng = new LatLng(latitude,longitude);
+            double latitudeValue = Double.parseDouble(latitude);
+            double longitudeValue= Double.parseDouble(longitude);
+            latLng = new LatLng(latitudeValue,longitudeValue);
 
             //When map is loaded
                 //Initialize marker options
@@ -120,51 +126,6 @@ public class LocationFragment extends Fragment {
     }
 
 
-    //LOCATION FUNCTIONS
-    void getLocation() {
-        startLocationUpdates();
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        fusedLocationClient.getLastLocation().addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                // Got last known location. In some rare situations this can be null.
-
-                if (location != null) {
-                    // Logic to handle location object
-                    latitude = location.getLatitude();
-                    longitude = location.getLongitude();
-                }
-                //check why 0 , 0
-                else {
-                    latitude = 6;
-                    longitude = 9;
-
-                }
-            }
-        });
-    }
-
-//send location
-    public void send_location() {
-        Bundle bundle = new Bundle();
-        bundle.putDouble("longitude", longitude);
-        bundle.putDouble("latitude", latitude);
-// set Fragmentclass Arguments
-        LocationFragment locationFragment = new LocationFragment();
-        locationFragment.setArguments(bundle);
-    }
-
-
     // Trigger new location updates at interval
     @SuppressLint("MissingPermission")
     protected void startLocationUpdates() {
@@ -187,11 +148,11 @@ public class LocationFragment extends Fragment {
 
         // Check whether location settings are satisfied
         // https://developers.google.com/android/reference/com/google/android/gms/location/SettingsClient
-        SettingsClient settingsClient = LocationServices.getSettingsClient(getContext());
+        SettingsClient settingsClient = LocationServices.getSettingsClient(mContext);
         settingsClient.checkLocationSettings(locationSettingsRequest);
 
         // new Google API SDK v11 uses getFusedLocationProviderClient(this)
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -201,29 +162,38 @@ public class LocationFragment extends Fragment {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        getFusedLocationProviderClient(getContext()).requestLocationUpdates(mLocationRequest, new LocationCallback() {
+        getFusedLocationProviderClient(mContext).requestLocationUpdates(mLocationRequest, new LocationCallback() {
                     @Override
                     public void onLocationResult(LocationResult locationResult) {
                         // do work here
-                        onLocationChanged(locationResult.getLastLocation());
                     }
                 },
                 Looper.myLooper());
     }
 
-    public void onLocationChanged(Location location) {
-        // New location has now been determined
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-       // Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
-        // You can now create a LatLng Object for use with maps
-        if (location != null) {
-            // Logic to handle location object
-            latitude = location.getLatitude();
-            longitude = location.getLongitude();
-        }
+    public void load_location_data() {
+        SharedPreferences sharedPreferences = this.getActivity().getSharedPreferences(SHARED_PREFS,MODE_PRIVATE );
+
+        longitude = sharedPreferences.getString(SHARED_LONG, "0");
+        latitude = sharedPreferences.getString(SHARED_LAT, "0");
+        Toast.makeText(mContext, "http://maps.google.com/?q=" + latitude + "," + longitude, Toast.LENGTH_SHORT).show();
     }
 
     //END Location function
+
+
+
+
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        mContext = context;
+        super.onAttach(context);
+    }
+
+    @Override
+    public void onAttach(@NonNull Activity activity) {
+        mActivity = activity;
+        super.onAttach(activity);
+    }
 }

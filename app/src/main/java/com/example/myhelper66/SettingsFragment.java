@@ -1,7 +1,6 @@
 package com.example.myhelper66;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.NotificationManager;
 import android.content.Context;
@@ -11,36 +10,28 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import android.telephony.SmsManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import static android.content.Context.MODE_PRIVATE;
 
 public class SettingsFragment extends Fragment {
 
-    //Requests
+    //Requests Code
     private static final int MY_PERMISSIONS_REQUEST_CODE = 123;
-    //Password
+    //SharedPrefernce values
     private static final String SHARED_PREFS = "sharedPrefs";
     private static final String SHARED_PASSWORD = "Password";
 
     private EditText password_ET;
 
-    private final String DefaultPasswordValue = "";
-    private String passwordValue;
-    private Activity mActivity;
 
 
     public SettingsFragment() {
@@ -50,10 +41,7 @@ public class SettingsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mActivity = this.getActivity();
 
-        }
     }
 
     @Override
@@ -75,7 +63,6 @@ public class SettingsFragment extends Fragment {
             checkPermission();
             }
         });
-
         Button set_BTN = view.findViewById(R.id.set);
         //set Button
         set_BTN.setOnClickListener(new View.OnClickListener() {
@@ -84,8 +71,7 @@ public class SettingsFragment extends Fragment {
                 set_password();
             }
         });
-
-        load_data();
+        load_password_to_EditText();
         return view;
 
 
@@ -100,12 +86,12 @@ public class SettingsFragment extends Fragment {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(SHARED_PASSWORD, password_ET.getText().toString());
         editor.apply();
-
         Toast.makeText(getActivity(), "Password has been saved!", Toast.LENGTH_SHORT).show();
+        ((MainActivity)getActivity()).load_password();
     }
-    public void load_data() {
+    public void load_password_to_EditText() {
         SharedPreferences sharedPreferences = this.getActivity().getSharedPreferences(SHARED_PREFS,MODE_PRIVATE );
-        passwordValue = sharedPreferences.getString(SHARED_PASSWORD, "");
+        String passwordValue = sharedPreferences.getString(SHARED_PASSWORD, "");
         password_ET.setText(passwordValue);
     }
 
@@ -152,9 +138,9 @@ public class SettingsFragment extends Fragment {
                 builder.setTitle("Please grant those permissions");
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int i) { ;
+                    public void onClick(DialogInterface dialogInterface, int i) {
                         ActivityCompat.requestPermissions(
-                                mActivity,
+                                getActivity(),
                                 new String[]{
                                         Manifest.permission.RECEIVE_SMS,
                                         Manifest.permission.SEND_SMS,
@@ -163,8 +149,6 @@ public class SettingsFragment extends Fragment {
                                         Manifest.permission.ACCESS_NOTIFICATION_POLICY,
                                         Manifest.permission.ACCESS_COARSE_LOCATION,
                                         Manifest.permission.ACCESS_FINE_LOCATION
-
-
                                 },
                                 MY_PERMISSIONS_REQUEST_CODE
                         );
