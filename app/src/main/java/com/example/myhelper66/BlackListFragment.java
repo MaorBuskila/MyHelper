@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import com.airbnb.lottie.LottieAnimationView;
+
 import java.util.ArrayList;
 
 
@@ -25,9 +27,11 @@ public class BlackListFragment extends Fragment {
     MyDataBase dataBase;
 
     //Initialize arraylist of value for blacklist
-    ArrayList<String> contact_id, contact_name, contact_phonenumber;
+    ArrayList<String> contact_id, contact_name, contact_phonenumber, contact_isBLocked;
 
     ParseAdapter parseAdapter;
+
+    boolean isBlocked = false;
 
 
     private Activity mActivity;
@@ -55,11 +59,15 @@ public class BlackListFragment extends Fragment {
         contact_id = new ArrayList<>();
         contact_name = new ArrayList<>();
         contact_phonenumber = new ArrayList<>();
-        parseAdapter = new ParseAdapter(mContext , contact_id, contact_name, contact_phonenumber);
+        contact_isBLocked = new ArrayList<>();
+        parseAdapter = new ParseAdapter(mContext , contact_id, contact_name, contact_phonenumber,contact_isBLocked);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setAdapter(parseAdapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(view.getContext()));
         storeDataInArray();
+
+
+
         // Inflate the layout for this fragment
         return view;
     }
@@ -72,8 +80,12 @@ public class BlackListFragment extends Fragment {
         else {
             while (cursor.moveToNext()){
                 contact_id.add(cursor.getString(0));
-                contact_phonenumber.add(cursor.getString(1));
-                contact_name.add(cursor.getString(2));
+
+                contact_name.add(cursor.getString(1));
+                contact_phonenumber.add(cursor.getString(2));
+                contact_isBLocked.add(cursor.getString(3));
+
+
             }
         }
     }

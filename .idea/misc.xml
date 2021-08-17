@@ -3,12 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/maorb/AndroidStudioProjects/MyHelper-gitUpdated/app/src/main/res/drawable/round_shape.xml" value="0.2140625" />
+        <entry key="..\:/Users/maorb/AndroidStudioProjects/MyHelper-gitUpdated/app/src/main/res/layout/activity_splash_activty.xml" value="0.36614583333333334" />
         <entry key="..\:/Users/maorb/AndroidStudioProjects/MyHelper-gitUpdated/app/src/main/res/layout/fragment_blacklist.xml" value="0.1" />
         <entry key="..\:/Users/maorb/AndroidStudioProjects/MyHelper-gitUpdated/app/src/main/res/layout/my_row.xml" value="0.35842293906810035" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

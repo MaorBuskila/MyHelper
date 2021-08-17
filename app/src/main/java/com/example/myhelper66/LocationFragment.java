@@ -65,7 +65,6 @@ public class LocationFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         view = inflater.inflate(R.layout.fragment_settings, container, false);
-        load_location_data();
 
 
 // TODO: 04/07/2021 when press on location navbar check if has persmssion to location
@@ -82,6 +81,7 @@ public class LocationFragment extends Fragment {
 
         // Initialize map fragment
         SupportMapFragment supportMapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        load_location_data();
         if (supportMapFragment == null) {
             FragmentManager fragmentManager = getFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();

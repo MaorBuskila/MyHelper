@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.Ringtone;
@@ -23,6 +24,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.airbnb.lottie.LottieAnimationView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -94,8 +96,6 @@ public class MainActivity extends AppCompatActivity { ;
 
 
 
-
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         startLocationUpdates();
 
@@ -158,6 +158,12 @@ public class MainActivity extends AppCompatActivity { ;
         String contact_name = getContactName(phonenumebr, mContext);
         myDataBase.addToBlackList(contact_name, phonenumebr);
     }
+
+    //check if contact is blocked
+    public boolean contact_is_blocked(String phonenumebr) {
+        return true;
+    }
+
 
     // get user password
     public void load_password() {
@@ -258,10 +264,10 @@ public class MainActivity extends AppCompatActivity { ;
 
     public void onLocationChanged(Location location) {
         // New location has now been determined
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
+//        String msg = "Updated Location: " +
+//                Double.toString(location.getLatitude()) + "," +
+//                Double.toString(location.getLongitude());
+//        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show();
         // You can now create a LatLng Object for use with maps
         if (location != null) {
             // Logic to handle location object
@@ -390,37 +396,88 @@ public String getContactNum(String name_to_search) {
         public void onReceive(Context context, Intent intent) {
             super.onReceive(context, intent);
             SmsManager smsManagerSend = SmsManager.getDefault();
-            LocationFragment locationFragment = new LocationFragment();
 
             phonenumebr = phoneNo;
-            //Help
-            if (msg.equals("Help me")) {
-                add_to_blackList(phoneNo);
-                smsManagerSend.sendTextMessage(phoneNo, null,
-                        "Ring - 'password' help me ring\n + " +
-                                "Location - 'password' find my location + " +
-                                "Contact - 'password' find number",
-                        null, null);
+            MyDataBase myDataBase = new MyDataBase(mContext);
+            boolean isblocked = myDataBase.CheckIfContactBlocked(phoneNo);
+
+//            else if (msg.equals(password +"Unblock")) {
+//                myDataBase.UnBlockContact(phonenumebr);
+//            } else {
+                if (msg.equals("Help me")) {
+                    add_to_blackList(phoneNo);
+                    if (isblocked) {
+                        add_to_blackList(phoneNo);
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "You are Blocked",
+                                null, null);
+
+                    } else {
+                        add_to_blackList(phoneNo);
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "Ring - 'password' help me ring\n " +
+                                        "Location - 'password' find my location\n " +
+                                        "Contact - 'password' find number",
+                                null, null);
+                    }
+                }
+//                if (msg.equals("Block")) {
+//                    myDataBase.BlockContact(phonenumebr);
+//                }
+//                if (msg.equals("Unblock")) {
+//                    myDataBase.UnBlockContact(phonenumebr);
+//                }
+                if (msg.equals("Block?")) {
+                     if (myDataBase.CheckIfContactBlocked(phonenumebr)) {
+                    smsManagerSend.sendTextMessage(phoneNo, null,
+                            "You are Blocked",
+                            null, null);
+                } else {
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "No problem!",
+                                null, null);
+                    }
+
             }
-            //Ring
-            else if (msg.equals(password + " help me ring")) {
-                playRingtone();
+                //Ring
+                else if (msg.equals(password + " help me ring")) {
+                    if (isblocked) {
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "You are Blocked",
+                                null, null);
+
+                    } else {
+                        playRingtone();
+                    }
 
 
-            } else if (msg.equals(password + " find my location")) {
-                Toast.makeText(context, "sending location", Toast.LENGTH_SHORT).show();
-                smsManagerSend.sendTextMessage(phoneNo, null,
-                        "http://maps.google.com/?q=" + latitude + "," + longitude, null, null);
+                } else if (msg.equals(password + " find my location")) {
+                    if (isblocked) {
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "You are Blocked",
+                                null, null);
+
+                    } else {
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "http://maps.google.com/?q=" + latitude + "," + longitude, null, null);
+                    }
+                } else if (msg.contains(password + " find number ")) {
+                    if (isblocked) {
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                "You are Blocked",
+                                null, null);
+
+                    } else {
+                        String contact = msg.substring(password.length() + 13);
+                        String contactNumber = getContactNum(contact);
+                        smsManagerSend.sendTextMessage(phoneNo, null,
+                                contactNumber, null, null);
+                    }
+                }
+
             }
 
-            else if (msg.contains(password + " find number ")) {
-                String contact = msg.substring(password.length() + 13);
-                String contactNumber = getContactNum(contact);
-                smsManagerSend.sendTextMessage(phoneNo, null,
-                        contactNumber, null, null);
-            }
 
-            }
 
     };
 
